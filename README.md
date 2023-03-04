@@ -1,12 +1,12 @@
 # MRSK
 
-MRSK deploys web apps anywhere from bare metal to cloud VMs using Docker with zero downtime. It uses the dynamic reverse-proxy Traefik to hold requests while the new application container is started and the old one is stopped. It works seamlessly across multiple hosts, using SSHKit to execute commands. It was built for Rails applications, but works with any type of web app that can be containerized with Docker.
+MRSK, sıfır kesinti süresiyle Docker kullanan çıplak donanımdan bulut VM'lerine kadar her yerde web uygulamalarını dağıtır. Yeni uygulama kapsayıcısını başlatırken ve eskisini durdururken istekleri tutmak için dinamik ters proxy Traefik kullanır. Komutları yürütmek için SSHKit kullanarak birden çok ana bilgisayarda sorunsuz çalışır. Rails uygulamaları için oluşturulmuştur, ancak Docker ile kapsayıcıya alınabilen herhangi bir web uygulamasıyla çalışır.
 
 Watch the screencast: https://www.youtube.com/watch?v=LL1cV2FXZ5I
 
-## Installation
+## Kurulum
 
-Install MRSK globally with `gem install mrsk`. Then, inside your app directory, run `mrsk init` (or `mrsk init --bundle` within Rails apps where you want a bin/mrsk binstub). Now edit the new file `config/deploy.yml`. It could look as simple as this:
+"gem install mrsk" ile MRSK'yi global olarak kurun. Ardından, uygulama dizininizin içinde "mrsk init" komutunu çalıştırın (veya bir bin/mrsk binstub istediğiniz Rails uygulamalarında "mrsk init --bundle"). Şimdi yeni `config/deploy.yml` dosyasını düzenleyin. Bu kadar basit görünebilir:
 
 ```yaml
 service: hey
@@ -23,66 +23,65 @@ env:
     - RAILS_MASTER_KEY
 ```
 
-Then edit your `.env` file to add your registry password as `MRSK_REGISTRY_PASSWORD` (and your `RAILS_MASTER_KEY` for production with a Rails app). 
+Ardından, kayıt defteri parolanızı "MRSK_REGISTRY_PASSWORD" (ve bir Rails uygulamasıyla üretim için "RAILS_MASTER_KEY") olarak eklemek için ".env" dosyanızı düzenleyin.
 
-Now you're ready to deploy to the servers:
-
+Artık sunuculara dağıtmaya hazırsınız:
 ```
-mrsk deploy
+mrsk dağıtma
 ```
 
-This will:
+  This will:
 
-1. Connect to the servers over SSH (using root by default, authenticated by your ssh key)
-2. Install Docker on any server that might be missing it (using apt-get)
-3. Log into the registry both locally and remotely
-4. Build the image using the standard Dockerfile in the root of the application.
-5. Push the image to the registry.
-6. Pull the image from the registry onto the servers.
-7. Ensure Traefik is running and accepting traffic on port 80.
-8. Ensure your app responds with `200 OK` to `GET /up`.
-9. Start a new container with the version of the app that matches the current git version hash.
-10. Stop the old container running the previous version of the app.
-11. Prune unused images and stopped containers to ensure servers don't fill up.
+1. SSH üzerinden sunuculara bağlanın (varsayılan olarak kök kullanarak, kimliği ssh anahtarınız tarafından doğrulanır)
+2. Docker'ı eksik olabilecek herhangi bir sunucuya kurun (apt-get kullanarak)
+3. Kayıt defterinde hem yerel hem de uzaktan oturum açın
+4. Uygulamanın kök dizinindeki standart Dockerfile'ı kullanarak görüntüyü oluşturun.
+5. Görüntüyü kayıt defterine itin.
+6. Görüntüyü kayıt defterinden sunuculara çekin.
+7. Traefik'in 80 numaralı bağlantı noktasında çalıştığından ve trafiği kabul ettiğinden emin olun.
+8. Uygulamanızın "GET /up" için "200 OK" ile yanıt verdiğinden emin olun.
+9. Geçerli git sürümü karması ile eşleşen uygulama sürümüyle yeni bir kapsayıcı başlatın.
+10. Uygulamanın önceki sürümünü çalıştıran eski kapsayıcıyı durdurun.
+11. Sunucuların dolmamasını sağlamak için kullanılmayan görüntüleri ve durdurulan kapsayıcıları budayın.
 
-Voila! All the servers are now serving the app on port 80. If you're just running a single server, you're ready to go. If you're running multiple servers, you need to put a load balancer in front of them.
+İşte! Artık tüm sunucular uygulamayı 80 numaralı bağlantı noktasında sunuyor. Yalnızca tek bir sunucu çalıştırıyorsanız, gitmeye hazırsınız. Birden fazla sunucu çalıştırıyorsanız, önlerine bir yük dengeleyici koymanız gerekir.
 
-## Vision
+## Vizyon
 
-In the past decade+, there's been an explosion in commercial offerings that make deploying web apps easier. Heroku kicked it off with an incredible offering that stayed ahead of the competition seemingly forever. These days we have excellent alternatives like Fly.io and Render. And hosted Kubernetes is making things easier too on AWS, GCP, Digital Ocean, and elsewhere. But these are all offerings that have you renting computers in the cloud at a premium. If you want to run on your own hardware, or even just have a clear migration path to do so in the future, you need to carefully consider how locked in you get to these commercial platforms. Preferably before the bills swallow your business whole!
+Geçtiğimiz on yılda+, web uygulamalarının dağıtımını kolaylaştıran ticari tekliflerde bir patlama oldu. Heroku, görünüşte sonsuza kadar rekabetin önünde kalan inanılmaz bir teklifle başladı. Bu günlerde Fly.io ve Render gibi mükemmel alternatiflerimiz var. Barındırılan Kubernetes, AWS, GCP, Digital Ocean ve başka yerlerde de işleri kolaylaştırıyor. Ancak bunların tümü, bulutta yüksek ücret karşılığında bilgisayar kiralamanızı sağlayan tekliflerdir. Kendi donanımınız üzerinde çalıştırmak istiyorsanız, hatta gelecekte bunu yapmak için net bir geçiş yolunuz varsa, bu ticari platformlara ne kadar kilitlendiğinizi dikkatlice düşünmeniz gerekir. Faturalar işinizi bir bütün olarak yutmadan önce tercih edin!
 
-MRSK seeks to bring the advance in ergonomics pioneered by these commercial offerings to deploying web apps anywhere. Whether that's low-cost cloud options without the managed-service markup from the likes of Digital Ocean, Hetzner, OVH, etc, or it's your own colocated bare metal. To MRSK, it's all the same. Feed the config file a list of IP addresses with vanilla Ubuntu servers that have seen no prep beyond an added SSH key, and you'll be running in literally minutes.
+MRSK, bu ticari tekliflerin öncülük ettiği ergonomideki ilerlemeyi web uygulamalarını her yerde dağıtmaya getirmeyi amaçlıyor. İster Digital Ocean, Hetzner, OVH, vb. gibi yönetilen hizmet işaretlemesi olmadan düşük maliyetli bulut seçenekleri, ister kendi ortak konumlu çıplak metaliniz olsun. MRSK için hepsi aynı. Yapılandırma dosyasına, eklenen bir SSH anahtarının ötesinde hiçbir hazırlık görmemiş vanilya Ubuntu sunucularına sahip IP adreslerinin bir listesini verin ve kelimenin tam anlamıyla birkaç dakika içinde çalışmaya başlayacaksınız.
 
-This approach gives you enormous portability. You can have your web app deployed on several clouds at ease like this. Or you can buy the baseline with your own hardware, then deploy to a cloud before a big seasonal spike to get more capacity. When you're not locked into a single provider from a tooling perspective, there are a lot of compelling options available.
+Bu yaklaşım size muazzam taşınabilirlik sağlar. Web uygulamanızın bu şekilde kolayca birkaç bulutta konuşlandırılmasını sağlayabilirsiniz. Ya da kendi donanımınızla taban hattını satın alabilir, ardından daha fazla kapasite elde etmek için büyük bir sezonluk artıştan önce bir buluta dağıtabilirsiniz. Takımlama açısından tek bir sağlayıcıya bağlı kalmadığınızda, pek çok ilgi çekici seçenek mevcuttur.
 
-Ultimately, MRSK is meant to compress the complexity of going to production using open source tooling that isn't tied to any commercial offering. Not to zero, mind you. You're probably still better off with a fully managed service if basic Linux or Docker is still difficult, but as soon as those concepts are familiar, you'll be ready to go with MRSK.
+Nihayetinde MRSK, herhangi bir ticari teklife bağlı olmayan açık kaynak araçları kullanarak üretime geçmenin karmaşıklığını azaltmayı amaçlıyor. Sıfır değil, dikkat et. Temel Linux veya Docker hala zorsa tam olarak yönetilen bir hizmetle muhtemelen daha iyi durumdasınızdır, ancak bu kavramlara aşina olur olmaz, MRSK ile devam etmeye hazır olacaksınız.
 
-## Why not just run Capistrano, Kubernetes or Docker Swarm?
+## Neden sadece Capistrano, Kubernetes veya Docker Swarm'ı çalıştırmıyorsunuz?
 
-MRSK basically is Capistrano for Containers, without the need to carefully prepare servers in advance. No need to ensure that the servers have just the right version of Ruby or other dependencies you need. That all lives in the Docker image now. You can boot a brand new Ubuntu (or whatever) server, add it to the list of servers in MRSK, and it'll be auto-provisioned with Docker, and run right away. Docker's layer caching also speeds up deployments with less mucking about on the server. And the images built for MRSK can be used for CI or later introspection.
+MRSK, sunucuları önceden dikkatli bir şekilde hazırlamaya gerek kalmadan temel olarak Konteynerler için Capistrano'dur. Sunucuların doğru Ruby sürümüne veya ihtiyacınız olan diğer bağımlılıklara sahip olduğundan emin olmanıza gerek yok. Bunların hepsi artık Docker görüntüsünde yaşıyor. Yepyeni bir Ubuntu (veya her neyse) sunucusunu önyükleyebilir, onu MRSK'deki sunucular listesine ekleyebilir ve Docker ile otomatik olarak sağlanır ve hemen çalıştırılır. Docker'ın katman önbelleğe alma özelliği, sunucuda daha az uğraşarak konuşlandırmaları da hızlandırır. MRSK için oluşturulan görüntüler, CI veya daha sonra iç gözlem için kullanılabilir.
 
-Kubernetes is a beast. Running it yourself on your own hardware is not for the faint of heart. It's a fine option if you want to run on someone else's platform, either transparently [like Render](https://thenewstack.io/render-cloud-deployment-with-less-engineering/) or explicitly on AWS/GCP, but if you'd like the freedom to move between cloud and your own hardware, or even mix the two, MRSK is much simpler. You can see everything that's going on, it's just basic Docker commands being called.
+Kubernetes bir canavardır. Kendi donanımınız üzerinde kendiniz çalıştırmak, kalbin zayıflığı için değildir. Şeffaf bir şekilde [Render gibi](https://thenewstack.io/render-cloud-deployment-with-less-engineering/) veya açıkça AWS/GCP'de başka birinin platformunda çalıştırmak istiyorsanız bu iyi bir seçenektir, ancak bulut ile kendi donanımınız arasında hareket etme, hatta ikisini karıştırma özgürlüğü istiyorsanız, MRSK çok daha basittir. Olan biten her şeyi görebilirsiniz, sadece çağrılan temel Docker komutları.
 
-Docker Swarm is much simpler than Kubernetes, but it's still built on the same declarative model that uses state reconciliation. MRSK is intentionally designed around imperative commands, like Capistrano.
+Docker Swarm, Kubernetes'ten çok daha basittir, ancak yine de durum mutabakatını kullanan aynı bildirim modeli üzerine inşa edilmiştir. MRSK, Capistrano gibi zorunlu komutlar etrafında kasıtlı olarak tasarlanmıştır.
 
-Ultimately, there are a myriad of ways to deploy web apps, but this is the toolkit we're using at [37signals](https://37signals.com) to bring [HEY](https://www.hey.com) [home from the cloud](https://world.hey.com/dhh/why-we-re-leaving-the-cloud-654b47e0) without losing the advantages of modern containerization tooling.
+Sonuç olarak, web uygulamalarını dağıtmanın sayısız yolu vardır, ancak bu, [37signals](https://37signals.com)'da [HEY](https://www.hey.com) getirmek için kullandığımız araç setidir. ) [buluttan eve](https://world.hey.com/dhh/why-we-re-leaving-the-cloud-654b47e0) modern konteynerleştirme araçlarının avantajlarını kaybetmeden.
 
 ## Configuration
 
-### Using .env file to load required environment variables
+### Gerekli ortam değişkenlerini yüklemek için .env dosyasını kullanma
 
-MRSK uses [dotenv](https://github.com/bkeepers/dotenv) to automatically load environment variables set in the `.env` file present in the application root. This file can be used to set variables like `MRSK_REGISTRY_PASSWORD` or database passwords. But for this reason you must ensure that .env files are not checked into Git or included in your Dockerfile! The format is just key-value like:
+MRSK, uygulama kökünde bulunan ".env" dosyasında ayarlanan ortam değişkenlerini otomatik olarak yüklemek için [dotenv](https://github.com/bkeepers/dotenv) kullanır. Bu dosya, MRSK_REGISTRY_PASSWORD gibi değişkenleri veya veritabanı şifrelerini ayarlamak için kullanılabilir. Ancak bu nedenle .env dosyalarının Git'e teslim edilmediğinden veya Dockerfile'ınıza dahil edilmediğinden emin olmalısınız! Biçim, şuna benzer bir anahtar/değer çiftidir:
 
 ```bash
 MRSK_REGISTRY_PASSWORD=pw
 DB_PASSWORD=secret123
 ```
 
-### Using a generated .env file
+### Oluşturulmuş bir .env dosyası kullanma
 
 #### 1password as a secret store
 
-If you're using a centralized secret store, like 1Password, you can create `.env.erb` as a template which looks up the secrets. Example of a .env.erb file:
+1Password gibi merkezi bir gizli depo kullanıyorsanız, sırları arayan bir şablon olarak `.env.erb` oluşturabilirsiniz. .env.erb dosyası örneği:
 
 ```erb
 <% if (session_token = `op signin --account my-one-password-account --raw`.strip) != "" %># Generated by mrsk envify
@@ -93,16 +92,15 @@ MYSQL_ROOT_PASSWORD=<%= `op read "op://Vault/My App/MYSQL_ROOT_PASSWORD" -n --se
 <% else raise ArgumentError, "Session token missing" end %>
 ```
 
-This template can safely be checked into git. Then everyone deploying the app can run `mrsk envify` when they setup the app for the first time or passwords change to get the correct `.env` file.
+Bu şablon güvenle git'te kontrol edilebilir. Ardından, uygulamayı dağıtan herkes, uygulamayı ilk kez kurduklarında "mrsk envify"ı çalıştırabilir veya doğru ".env" dosyasını almak için parolaları değiştirebilir.
 
-If you need separate env variables for different destinations, you can set them with `.env.destination.erb` for the template, which will generate `.env.staging` when run with `mrsk envify -d staging`.
+Farklı hedefler için ayrı env değişkenlerine ihtiyacınız varsa, bunları "mrsk envify -d staging" ile çalıştırıldığında ".env.staging" oluşturacak olan şablon için ".env.destination.erb" ile ayarlayabilirsiniz.
 
-#### bitwarden as a secret store
+#### gizli depo olarak bitwarden
 
-If you are using open source secret store like bitwarden, you can create `.env.erb` as a template which looks up the secrets. 
+Bitwarden gibi açık kaynaklı bir gizli depo kullanıyorsanız, sırları arayan bir şablon olarak `.env.erb` oluşturabilirsiniz.
 
-You can store `SOME_SECRET` in a secure note in bitwarden vault. 
-
+`SOME_SECRET`i bitwarden kasasında güvenli bir notta saklayabilirsiniz.
 ```
 $ bw list items --search SOME_SECRET | jq
 ? Master password: [hidden]
@@ -129,10 +127,9 @@ $ bw list items --search SOME_SECRET | jq
 ]
 ```
 
-and extract the `id` of `SOME_SECRET` from the `json` above and use in the `erb` below.
+ve "SOME_SECRET"in "id"ini yukarıdaki "json"dan çıkarın ve aşağıdaki "erb"de kullanın.
 
-
-Example `.env.erb` file:
+Örnek `.env.erb` dosyası:
 
 ```erb
 <% if (session_token=`bw unlock --raw`.strip) != "" %># Generated by mrsk envify
@@ -140,12 +137,11 @@ SOME_SECRET=<%= `bw get notes 123123123-1232-4224-222f-234234234234 --session #{
 <% else raise ArgumentError, "session_token token missing" end %>
 ```
 
-Then everyone deploying the app can run `mrsk envify` and mrsk will generate `.env` 
+Ardından, uygulamayı dağıtan herkes "mrsk envify" komutunu çalıştırabilir ve mrsk, ".env" dosyasını oluşturur.
 
+### Docker Hub dışında başka bir kayıt defteri kullanma
 
-### Using another registry than Docker Hub
-
-The default registry is Docker Hub, but you can change it using `registry/server`:
+Varsayılan kayıt defteri Docker Hub'dır, ancak bunu "kayıt defteri/sunucu" kullanarak değiştirebilirsiniz:
 
 ```yaml
 registry:
@@ -154,34 +150,33 @@ registry:
   password: <%= ENV.fetch("MRSK_REGISTRY_PASSWORD") %>
 ```
 
-### Using a different SSH user than root
+### Kökten farklı bir SSH kullanıcısı kullanma
 
-The default SSH user is root, but you can change it using `ssh/user`:
+Varsayılan SSH kullanıcısı root'tur, ancak bunu "ssh/user" kullanarak değiştirebilirsiniz:
 
 ```yaml
 ssh:
   user: app
 ```
 
-### Using a proxy SSH host
+### Proxy SSH ana bilgisayarı kullanma
 
-If you need to connect to server through a proxy host, you can use `ssh/proxy`:
+Sunucuya bir proxy ana bilgisayarı aracılığıyla bağlanmanız gerekiyorsa, "ssh/proxy" kullanabilirsiniz:
 
 ```yaml
 ssh:
   proxy: "192.168.0.1" # defaults to root as the user
 ```
 
-Or with specific user:
+Veya belirli bir kullanıcıyla:
 
 ```yaml
 ssh:
   proxy: "app@192.168.0.1"
 ```
+### env değişkenlerini kullanma
 
-### Using env variables
-
-You can inject env variables into the app containers using `env`:
+"env" kullanarak env değişkenlerini uygulama kapsayıcılarına enjekte edebilirsiniz:
 
 ```yaml
 env:
@@ -203,24 +198,24 @@ env:
     - REDIS_PASSWORD
 ```
 
-The list of secret env variables will be expanded at run time from your local machine. So a reference to a secret `DATABASE_PASSWORD` will look for `ENV["DATABASE_PASSWORD"]` on the machine running MRSK. Just like with build secrets.
+Gizli ortam değişkenlerinin listesi, çalışma zamanında yerel makinenizden genişletilecektir. Bu nedenle, gizli bir "DATABASE_PASSWORD" referansı, MRSK çalıştıran makinede "ENV["DATABASE_PASSWORD"]" ifadesini arayacaktır. Tıpkı yapı sırlarında olduğu gibi.
 
-If the referenced secret ENVs are missing, the configuration will be halted with a `KeyError` exception.
+Başvurulan gizli ENV'ler eksikse, yapılandırma bir "KeyError" istisnasıyla durdurulur.
 
-Note: Marking an ENV as secret currently only redacts its value in the output for MRSK. The ENV is still injected in the clear into the container at runtime.
+Not: Bir ENV'yi gizli olarak işaretlemek şu anda yalnızca MRSK çıktısındaki değerini çıkarır. ENV, çalışma zamanında şeffaf olarak konteynere enjekte edilir.
 
-### Using volumes
+### Birimleri kullanma
 
-You can add custom volumes into the app containers using `volumes`:
+"Birimler"i kullanarak uygulama kapsayıcılarına özel birimler ekleyebilirsiniz:
 
 ```yaml
 volumes:
   - "/local/path:/container/path"
 ```
 
-### Using different roles for servers
+### Sunucular için farklı roller kullanma
 
-If your application uses separate hosts for running jobs or other roles beyond the default web running, you can specify these hosts in a dedicated role with a new entrypoint command like so:
+Uygulamanız, varsayılan web çalışmasının ötesindeki işleri veya diğer rolleri çalıştırmak için ayrı ana bilgisayarlar kullanıyorsa, bu ana bilgisayarları aşağıdaki gibi yeni bir giriş noktası komutuyla özel bir rolde belirtebilirsiniz:
 
 ```yaml
 servers:
@@ -234,7 +229,7 @@ servers:
     cmd: bin/jobs
 ```
 
-Note: Traefik will only by default be installed and run on the servers in the `web` role (and on all servers if no roles are defined). If you need Traefik on hosts in other roles than `web`, add `traefik: true`:
+Not: Traefik varsayılan olarak yalnızca "web" rolündeki sunuculara (ve herhangi bir rol tanımlanmamışsa tüm sunuculara) yüklenecek ve çalışacaktır. Traefik'e "web" dışındaki rollerde sahip makinelerde ihtiyacınız varsa, "traefik: true" ekleyin:
 
 ```yaml
 servers:
@@ -248,19 +243,17 @@ servers:
       - 192.168.0.4
 ```
 
-### Using container labels
-
-You can specialize the default Traefik rules by setting labels on the containers that are being started:
+### Kapsayıcı etiketleri kullanma
+Başlatılmakta olan kapsayıcılara etiketler ayarlayarak varsayılan Traefik kurallarını özelleştirebilirsiniz:
 
 ```
 labels:
   traefik.http.routers.hey.rule: Host(\`app.hey.com\`)
 ```
 
-Note: The escaped backticks are needed to ensure the rule is passed in correctly and not treated as command substitution by Bash!
+Not: Kuralın doğru bir şekilde iletildiğinden ve Bash tarafından komut ikamesi olarak değerlendirilmediğinden emin olmak için kaçan ters işaretler gereklidir!
 
-This allows you to run multiple applications on the same server sharing the same Traefik instance and port.
-See https://doc.traefik.io/traefik/routing/routers/#rule for a full list of available routing rules.
+Bu, aynı Traefik örneğini ve bağlantı noktasını paylaşan aynı sunucuda birden fazla uygulama çalıştırmanıza olanak tanır.See https://doc.traefik.io/traefik/routing/routers/#rule for a full list of available routing rules.
 
 The labels can also be applied on a per-role basis:
 
@@ -278,11 +271,11 @@ servers:
       my-label: "50"
 ```
 
-### Using remote builder for native multi-arch
+### Yerel çoklu arşiv için uzak oluşturucuyu kullanma
 
-If you're developing on ARM64 (like Apple Silicon), but you want to deploy on AMD64 (x86 64-bit), you can use multi-architecture images. By default, MRSK will setup a local buildx configuration that does this through QEMU emulation. But this can be quite slow, especially on the first build.
+ARM64 (Apple Silicon gibi) üzerinde geliştirme yapıyorsanız, ancak AMD64 (x86 64 bit) üzerinde dağıtım yapmak istiyorsanız, çoklu mimari görüntüleri kullanabilirsiniz. Varsayılan olarak MRSK, bunu QEMU emülasyonu aracılığıyla yapan yerel bir buildx yapılandırması kuracaktır. Ancak bu, özellikle ilk derlemede oldukça yavaş olabilir.
 
-If you want to speed up this process by using a remote AMD64 host to natively build the AMD64 part of the image, while natively building the ARM64 part locally, you can do so using builder options:
+ARM64 bölümünü yerel olarak yerel olarak oluştururken görüntünün AMD64 bölümünü yerel olarak oluşturmak için uzak bir AMD64 ana bilgisayarı kullanarak bu işlemi hızlandırmak istiyorsanız, bunu oluşturucu seçeneklerini kullanarak yapabilirsiniz:
 
 ```yaml
 builder:
@@ -294,11 +287,11 @@ builder:
     host: ssh://root@192.168.0.1
 ```
 
-Note: You must have Docker running on the remote host being used as a builder. This instance should only be shared for builds using the same registry and credentials.
+Not: Oluşturucu olarak kullanılan uzak ana bilgisayarda Docker'ın çalışıyor olması gerekir. Bu örnek, yalnızca aynı kayıt defterini ve kimlik bilgilerini kullanan derlemeler için paylaşılmalıdır.
 
-### Using remote builder for single-arch
+### Tek kemer için uzak oluşturucuyu kullanma
 
-If you're developing on ARM64 (like Apple Silicon), want to deploy on AMD64 (x86 64-bit), but don't need to run the image locally (or on other ARM64 hosts), you can configure a remote builder that just targets AMD64. This is a bit faster than building with multi-arch, as there's nothing to build locally.
+ARM64 (Apple Silicon gibi) üzerinde geliştirme yapıyorsanız, AMD64 (x86 64 bit) üzerinde dağıtım yapmak istiyorsanız, ancak görüntüyü yerel olarak (veya diğer ARM64 ana bilgisayarlarında) çalıştırmanız gerekmiyorsa, bir uzak oluşturucu yapılandırabilirsiniz. sadece AMD64'ü hedefler. Yerel olarak inşa edilecek bir şey olmadığı için bu, çoklu kemer ile inşa etmekten biraz daha hızlıdır.
 
 ```yaml
 builder:
@@ -307,20 +300,20 @@ builder:
     host: ssh://root@192.168.0.1
 ```
 
-### Using native builder when multi-arch isn't needed
+### Çoklu arşiv gerekli olmadığında yerel oluşturucuyu kullanma
 
-If you're developing on the same architecture as the one you're deploying on, you can speed up the build by forgoing both multi-arch and remote building:
+Dağıtmakta olduğunuz mimariyle aynı mimari üzerinde geliştirme yapıyorsanız, hem çok kemerli hem de uzak yapıdan vazgeçerek yapıyı hızlandırabilirsiniz:
 
 ```yaml
 builder:
   multiarch: false
 ```
 
-This is also a good option if you're running MRSK from a CI server that shares architecture with the deployment servers.
+TMRSK'yi dağıtım sunucularıyla mimariyi paylaşan bir CI sunucusundan çalıştırıyorsanız, bu da iyi bir seçenektir.
 
-### Using build secrets for new images
+### Yeni görüntüler için yapı sırlarını kullanma
 
-Some images need a secret passed in during build time, like a GITHUB_TOKEN, to give access to private gem repositories. This can be done by having the secret in ENV, then referencing it in the builder configuration:
+Bazı görüntülerin, özel mücevher havuzlarına erişim sağlamak için oluşturma sırasında GITHUB_TOKEN gibi bir sırrın iletilmesi gerekir. Bu, sırrı ENV'de bulundurarak ve ardından oluşturucu yapılandırmasında ona başvurarak yapılabilir:
 
 ```yaml
 builder:
@@ -328,7 +321,7 @@ builder:
     - GITHUB_TOKEN
 ```
 
-This build secret can then be referenced in the Dockerfile:
+Bu derleme sırrına daha sonra Dockerfile'da başvurulabilir:
 
 ```dockerfile
 # Copy Gemfiles
@@ -341,9 +334,9 @@ RUN --mount=type=secret,id=GITHUB_TOKEN \
   rm -rf /usr/local/bundle/cache
 ```
 
-### Using command arguments for Traefik
+### Traefik için komut bağımsız değişkenlerini kullanma
 
-You can customize the traefik command line:
+traefik komut satırını özelleştirebilirsiniz:
 
 ```yaml
 traefik:
@@ -351,12 +344,11 @@ traefik:
     accesslog: true
     accesslog.format: json
 ```
+Bu, `--accesslog=true accesslog.format=json` ile traefik kapsayıcısını başlatacaktır.
 
-This will start the traefik container with `--accesslog=true accesslog.format=json`.
+### Yeni görüntüler için yapı bağımsız değişkenlerini yapılandırma
 
-### Configuring build args for new images
-
-Build arguments that aren't secret can also be configured:
+Gizli olmayan derleme bağımsız değişkenleri de yapılandırılabilir:
 
 ```yaml
 builder:
@@ -364,17 +356,16 @@ builder:
     RUBY_VERSION: 3.2.0
 ```
 
-This build argument can then be used in the Dockerfile:
-
+Bu derleme bağımsız değişkeni daha sonra Dockerfile'da kullanılabilir:
 ```
 # Private repositories need an access token during the build
 ARG RUBY_VERSION
 FROM ruby:$RUBY_VERSION-slim as base
 ```
 
-### Using accessories for database, cache, search services
+### Veritabanı, önbellek, arama hizmetleri için aksesuarları kullanma
 
-You can manage your accessory services via MRSK as well. The services will build off public images, and will not be automatically updated when you deploy:
+Aksesuar hizmetlerinizi de MRSK üzerinden yönetebilirsiniz. Hizmetler, herkese açık görüntüler oluşturacak ve dağıttığınızda otomatik olarak güncellenmeyecek:
 
 ```yaml
 accessories:
@@ -397,11 +388,11 @@ accessories:
       - /var/lib/redis:/data
 ```
 
-Now run `mrsk accessory start mysql` to start the MySQL server on 1.1.1.3. See `mrsk accessory` for all the commands possible.
+Şimdi MySQL sunucusunu 1.1.1.3'te başlatmak için `mrsk aksesuarı start mysql` komutunu çalıştırın. Mümkün olan tüm komutlar için mrsk aksesuarına bakın.
 
-### Using Cron
+### Cron'u Kullanma
 
-You can use a specific container to run your Cron jobs:
+Cron işlerinizi çalıştırmak için belirli bir kapsayıcı kullanabilirsiniz:
 
 ```yaml
 servers:
@@ -411,34 +402,32 @@ servers:
     cmd:
       bash -c "cat config/crontab | crontab - && cron -f"
 ```
+Bu, Cron ayarlarının "config/crontab" içinde saklandığını varsayar.
 
-This assumes the Cron settings are stored in `config/crontab`.
+### Denetim yayınlarını kullanma
 
-### Using audit broadcasts
-
-If you'd like to broadcast audits of deploys, rollbacks, etc to a chatroom or elsewhere, you can configure the `audit_broadcast_cmd` setting with the path to a bin file that will be passed the audit line as the first argument:
+Dağıtım, geri alma vb. denetimlerini bir sohbet odasına veya başka bir yere yayınlamak isterseniz, denetim satırından ilk bağımsız değişken olarak geçirilecek bir bin dosyasının yolu ile "audit_broadcast_cmd" ayarını yapılandırabilirsiniz:
 
 ```yaml
 audit_broadcast_cmd:
   bin/audit_broadcast
 ```
 
-The broadcast command could look something like:
-
+Yayın komutu şöyle görünür:
 ```bash
 #!/usr/bin/env bash
 curl -q -d content="[My App] ${1}" https://3.basecamp.com/XXXXX/integrations/XXXXX/buckets/XXXXX/chats/XXXXX/lines
 ```
 
-That'll post a line like follows to a preconfigured chatbot in Basecamp:
+Bu, Basecamp'ta önceden yapılandırılmış bir sohbet robotuna aşağıdaki gibi bir satır gönderir:
 
 ```
 [My App] [dhh] Rolled back to version d264c4e92470ad1bd18590f04466787262f605de
 ```
 
-### Using custom healthcheck path or port
+### Özel durum denetimi yolu veya bağlantı noktası kullanma
 
-MRSK defaults to checking the health of your application again `/up` on port 3000. You can tailor both with the `healthcheck` setting:
+MRSK varsayılan olarak uygulamanızın durumunu 3000 numaralı bağlantı noktasında "/up" yeniden kontrol eder. Her ikisini de "healthcheck" ayarıyla uyarlayabilirsiniz:
 
 ```yaml
 healthcheck:
@@ -446,16 +435,16 @@ healthcheck:
   port: 4000
 ```
 
-This will ensure your application is configured with a traefik label for the healthcheck against `/healthz` and that the pre-deploy healthcheck that MRSK performs is done against the same path on port 4000.
+Bu, uygulamanızın `/healthz` karşısında sağlık kontrolü için traefik etiketiyle yapılandırılmasını ve MRSK'nin gerçekleştirdiği dağıtım öncesi sağlık kontrolünün 4000 numaralı bağlantı noktasında aynı yola karşı yapılmasını sağlar.
 
-## Commands
+## Komutlar
 
-### Running commands on servers
+### Sunucularda komut çalıştırma
 
-You can execute one-off commands on the servers:
+Sunucularda tek seferlik komutları çalıştırabilirsiniz:
 
 ```bash
-# Runs command on all servers
+# Komutu tüm sunucularda çalıştırır
 mrsk app exec 'ruby -v'
 App Host: 192.168.0.1
 ruby 3.1.3p185 (2022-11-24 revision 1a6b16756e) [x86_64-linux]
@@ -463,7 +452,7 @@ ruby 3.1.3p185 (2022-11-24 revision 1a6b16756e) [x86_64-linux]
 App Host: 192.168.0.2
 ruby 3.1.3p185 (2022-11-24 revision 1a6b16756e) [x86_64-linux]
 
-# Runs command on primary server
+# Komutu birincil sunucuda çalıştırır
 mrsk app exec --primary 'cat .ruby-version'
 App Host: 192.168.0.1
 3.1.3
@@ -494,14 +483,14 @@ Environment               production
 Database adapter          sqlite3
 Database schema version   20221231233303
 
-# Run Rails runner on primary server
+# Rails runner'ı birincil sunucuda çalıştırın
 mrsk app exec -p 'bin/rails runner "puts Rails.application.config.time_zone"'
 UTC
 ```
 
-### Running interactive commands over SSH
+### SSH üzerinden etkileşimli komutlar çalıştırma
 
-You can run interactive commands, like a Rails console or a bash session, on a server (default is primary, use `--hosts` to connect to another):
+Bir sunucuda Rails konsolu veya bash oturumu gibi etkileşimli komutlar çalıştırabilirsiniz (varsayılan birincildir, diğerine bağlanmak için --hosts'u kullanın):
 
 ```bash
 # Starts a bash session in a new container made from the most recent app image
@@ -515,9 +504,9 @@ mrsk app exec -i 'bin/rails console'
 ```
 
 
-### Running details to show state of containers
+### Kapsayıcıların durumunu göstermek için çalışan ayrıntılar
 
-You can see the state of your servers by running `mrsk details`:
+`mrsk detaylarını` çalıştırarak sunucularınızın durumunu görebilirsiniz:
 
 ```
 Traefik Host: 192.168.0.1
@@ -537,9 +526,9 @@ CONTAINER ID   IMAGE                                                            
 1d3c91ed1f55   registry.digitalocean.com/user/app:6ef8a6a84c525b123c5245345a8483f86d05a123   "/rails/bin/docker-e…"   13 minutes ago   Up 13 minutes   3000/tcp   chat-6ef8a6a84c525b123c5245345a8483f86d05a123
 ```
 
-You can also see just info for app containers with `mrsk app details` or just for Traefik with `mrsk traefik details`.
+Ayrıca, "mrsk uygulama ayrıntıları" ile yalnızca uygulama kapsayıcıları için veya "mrsk traefik ayrıntıları" ile yalnızca Traefik için bilgileri görebilirsiniz.
 
-### Running rollback to fix a bad deploy
+### Kötü bir dağıtımı düzeltmek için geri alma çalıştırılıyor
 
 If you've discovered a bad deploy, you can quickly rollback by reactivating the old, paused container image. You can see what old containers are available for rollback by running `mrsk app containers`. It'll give you a presentation similar to `mrsk app details`, but include all the old containers as well. Showing something like this:
 
@@ -555,18 +544,18 @@ badb1aa51db4   registry.digitalocean.com/user/app:6ef8a6a84c525b123c5245345a8483
 6f170d1172ae   registry.digitalocean.com/user/app:e5d9d7c2b898289dfbc5f7f1334140d984eedae4   "/rails/bin/docker-e…"   31 minutes ago   Exited (1) 27 minutes ago              chat-e5d9d7c2b898289dfbc5f7f1334140d984eedae4
 ```
 
-From the example above, we can see that `e5d9d7c2b898289dfbc5f7f1334140d984eedae4` was the last version, so it's available as a rollback target. We can perform this rollback by running `mrsk rollback e5d9d7c2b898289dfbc5f7f1334140d984eedae4`. That'll stop `6ef8a6a84c525b123c5245345a8483f86d05a123` and then start `e5d9d7c2b898289dfbc5f7f1334140d984eedae4`. Because the old container is still available, this is very quick. Nothing to download from the registry.
+Yukarıdaki örnekten, "e5d9d7c2b898289dfbc5f7f1334140d984eedae4" dosyasının son sürüm olduğunu görebiliriz, dolayısıyla bir geri alma hedefi olarak kullanılabilir. Bu geri dönüşü mrsk rollback e5d9d7c2b898289dfbc5f7f1334140d984eedae4' komutunu çalıştırarak gerçekleştirebiliriz. Bu, "6ef8a6a84c525b123c5245345a8483f86d05a123" ifadesini durdurur ve ardından "e5d9d7c2b898289dfbc5f7f1334140d984eedae4" ifadesini başlatır. Eski konteyner hala mevcut olduğu için bu çok hızlıdır. Kayıt defterinden indirilecek bir şey yok.
 
-Note that by default old containers are pruned after 3 days when you run `mrsk deploy`.
+`mrsk konuşlandırması`nı çalıştırdığınızda, varsayılan olarak eski kapların 3 gün sonra budandığını unutmayın.
 
-### Running removal to clean up servers
+### Sunucuları temizlemek için kaldırma işlemi çalıştırılıyor
 
-If you wish to remove the entire application, including Traefik, containers, images, and registry session, you can run `mrsk remove`. This will leave the servers clean.
+Traefik, kapsayıcılar, resimler ve kayıt oturumu dahil olmak üzere tüm uygulamayı kaldırmak isterseniz, mrsk remove komutunu çalıştırabilirsiniz. Bu, sunucuları temiz bırakacaktır.
 
-## Stage of development
+## Geliştirme aşaması
 
-This is beta software. Commands may still move around. But we're live in production at [37signals](https://37signals.com).
+Bu bir beta yazılımıdır. Komutlar yine de hareket edebilir. Ancak [37signals](https://37signals.com) adresinde canlı yayındayız.
 
-## License
+## Lisans
 
-MRSK is released under the [MIT License](https://opensource.org/licenses/MIT).
+MRSK, [MIT Lisansı](https://opensource.org/licenses/MIT) altında yayınlanmıştır.
